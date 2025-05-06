@@ -1,6 +1,7 @@
 # Windows 11 Developer Environment Bootstrap
 # Created: 2025-05-06
 # Author: ms-86
+# Repository: ms-86/win-dotfiles
 
 # Ensure script execution is allowed
 if ((Get-ExecutionPolicy) -gt 'RemoteSigned') {
@@ -20,25 +21,18 @@ Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://com
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 Write-Host "Chocolatey installed successfully!" -ForegroundColor Green
 
-# Install Git
-# Write-Host "Installing Git..." -ForegroundColor Cyan
-# choco install git -y
+# Immediately install Git
+Write-Host "Installing Git..." -ForegroundColor Cyan
+choco install git -y
 
-# Install VS Code (optional)
-# Write-Host "Installing Visual Studio Code..." -ForegroundColor Cyan
-# choco install vscode -y
+# Refresh environment variables to recognize git
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+Write-Host "Git installed successfully!" -ForegroundColor Green
 
-# Install other essential tools
-# Uncomment or add tools you need
-# choco install nodejs -y
-# choco install python -y
-# choco install microsoft-windows-terminal -y
-
-# Clone your repository (optional)
-# $repoUrl = "https://github.com/yourusername/yourrepository.git"
-# $repoPath = "$HOME\Projects\yourrepository"
-# Write-Host "Cloning your repository to $repoPath..." -ForegroundColor Cyan
-# git clone $repoUrl $repoPath
-
-Write-Host "Setup complete!" -ForegroundColor Green
+Write-Host "Bootstrap setup complete!" -ForegroundColor Green
+Write-Host "You now have Chocolatey and Git installed and can start cloning repositories." -ForegroundColor Green
+Write-Host "To install additional tools, you can now use:" -ForegroundColor Yellow
+Write-Host "  choco install <package-name> -y" -ForegroundColor Yellow
+Write-Host "Example: choco install vscode -y" -ForegroundColor Yellow
+Write-Host ""
 Write-Host "You may need to restart your terminal for all changes to take effect." -ForegroundColor Yellow
