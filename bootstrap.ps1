@@ -5,13 +5,11 @@
 # Exit immediately on any error (like set -e in bash)
 $ErrorActionPreference = 'Stop'
 
-# Check if running as Administrator
 function Test-Administrator {
     $currentUser = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
     return $currentUser.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
-# Function to get user confirmation
 function Get-UserConfirmation {
     param(
         [string]$Message,
@@ -31,7 +29,6 @@ function Get-UserConfirmation {
     return $result -eq 0
 }
 
-# Function to install Chocolatey
 function Install-Chocolatey {
     param(
         [bool]$AdminMode,
@@ -39,8 +36,7 @@ function Install-Chocolatey {
     )
 
     Write-Host "Installing Chocolatey..." -ForegroundColor Cyan
-    
-    # Set up environment for Chocolatey installation
+
     if (-not $AdminMode -and $InstallDir) {
         # Set environment variable for non-admin install
         $env:ChocolateyInstall = $InstallDir
@@ -57,10 +53,17 @@ function Install-Chocolatey {
     Write-Host "Chocolatey installed successfully at: $env:ChocolateyInstall" -ForegroundColor Green
 }
 
-# Function to install Git
 function Install-Git {
     Write-Host "Installing Git..." -ForegroundColor Cyan
-    & choco install git -y
+    
+    if ($AdminMode) {
+        Write-Host "Installing standard Git package (requires admin rights)..." -ForegroundColor Cyan
+        & choco install git -y
+    } else {
+        Write-Host "Installing portable Git package (no admin rights required)..." -ForegroundColor Cyan
+        & choco install git.portable -y
+    }
+    
     if ($LASTEXITCODE -ne 0) { throw "Git installation failed with exit code $LASTEXITCODE" }
     
     # Refresh PATH
@@ -69,35 +72,29 @@ function Install-Git {
     Write-Host "Git installed successfully!" -ForegroundColor Green
 }
 
-# ===== Main Script Execution Starts Here =====
+# ===== Main Script =====
 
 Write-Host "Starting Windows initial bootstrap..." -ForegroundColor Green
 
-# Set execution policy for this process
 $currentPolicy = Get-ExecutionPolicy -Scope Process
 if ($currentPolicy -ne 'RemoteSigned') {
     Write-Host "Setting execution policy to RemoteSigned for this process..." -ForegroundColor Cyan
     Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned -Force
 }
 
-# Detect if running as Administrator
 $isAdmin = Test-Administrator
 
-# Handle installation based on current privilege level
 if ($isAdmin) {
-    # Admin mode detected
     Write-Host "Administrator privileges detected." -ForegroundColor Cyan
     $confirmStandardInstall = Get-UserConfirmation "Would you like to proceed with standard installation of Chocolatey to C:\ProgramData\chocolatey?"
     
     if ($confirmStandardInstall) {
-        # Install Chocolatey in admin mode (default location)
         Install-Chocolatey -AdminMode $true
     } else {
         Write-Host "Installation cancelled by user." -ForegroundColor Yellow
         exit
     }
 } else {
-    # Non-admin mode detected
     Write-Host "Running without administrator privileges." -ForegroundColor Yellow
     $confirmElevate = Get-UserConfirmation "Standard installation requires administrator privileges. Would you like to restart the script with elevated permissions? (Recommended)"
     
@@ -123,7 +120,6 @@ if ($isAdmin) {
     }
 }
 
-# After Chocolatey is installed, install Git
 $confirmGit = Get-UserConfirmation "Do you want to install Git?"
 if ($confirmGit) {
     Install-Git
