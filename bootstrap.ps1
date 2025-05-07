@@ -15,12 +15,14 @@ function Test-Administrator {
 function Get-UserConfirmation {
     param(
         [string]$Message,
+        [string]$YesText = "&Yes",
+        [string]$NoText = "&No",
         [string]$DefaultChoice = "Y"
     )
     
     $choices = @(
-        [System.Management.Automation.Host.ChoiceDescription]::new("&Yes", "Proceed with the action.")
-        [System.Management.Automation.Host.ChoiceDescription]::new("&No", "Cancel the action.")
+        [System.Management.Automation.Host.ChoiceDescription]::new($YesText, "Proceed with the action.")
+        [System.Management.Automation.Host.ChoiceDescription]::new($NoText, "Cancel the action.")
     )
     
     $defaultChoiceIndex = if ($DefaultChoice -eq "Y") { 0 } else { 1 }
@@ -43,9 +45,7 @@ function Install-Chocolatey {
     
     if (-not $AdminMode -and $InstallDir) {
         # Create install directory if it doesn't exist
-        if (-not (Test-Path $InstallDir)) {
-            New-Item -Path $InstallDir -ItemType Directory -Force | Out-Null
-        }
+        New-Item -Path $InstallDir -ItemType Directory -Force | Out-Null
         
         # Set environment variable for non-admin install
         [Environment]::SetEnvironmentVariable("ChocolateyInstall", $InstallDir, "User")
@@ -78,7 +78,11 @@ function Install-Git {
 Write-Host "Starting Windows initial bootstrap..." -ForegroundColor Green
 
 # Set execution policy for this process
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned -Force
+$currentPolicy = Get-ExecutionPolicy -Scope Process
+if ($currentPolicy -ne 'RemoteSigned') {
+    Write-Host "Setting execution policy to RemoteSigned for this process..." -ForegroundColor Cyan
+    Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned -Force
+}
 
 # Detect if running as Administrator
 $isAdmin = Test-Administrator
@@ -108,17 +112,14 @@ if ($isAdmin) {
         exit
     } else {
         # User declined elevation, offer non-admin install
-        $userInstallDir = "$HOME\chocolatey"
-        Write-Host "`nProceeding with user-specific installation..." -ForegroundColor Yellow
-        Write-Host "Default installation path: $userInstallDir" -ForegroundColor Cyan
+        $userInstallDir = Read-Host "Enter installation directory (default: $HOME\chocolatey)"
+        if (-not $userInstallDir) {
+            $userInstallDir = "$HOME\chocolatey"
+        }
         
-        $confirmDir = Get-UserConfirmation "Install Chocolatey to $userInstallDir?"
+        $confirmDir = Get-UserConfirmation "Install Chocolatey to $($userInstallDir?)"
         if (-not $confirmDir) {
-            $userInstallDir = Read-Host "Enter custom installation directory"
-            if (-not $userInstallDir) {
-                Write-Host "Installation cancelled: No directory specified" -ForegroundColor Red
-                exit 1
-            }
+            exit 1
         }
         
         # Install Chocolatey in non-admin mode (custom location)
