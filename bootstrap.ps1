@@ -55,6 +55,10 @@ function Install-Chocolatey {
 }
 
 function Install-Git {
+    param(
+        [bool]$AdminMode
+    )
+    
     Write-Host "Installing Git..." -ForegroundColor Cyan
     
     if ($AdminMode) {
