@@ -41,13 +41,9 @@ function Install-Chocolatey {
     Write-Host "Installing Chocolatey..." -ForegroundColor Cyan
     
     # Set up environment for Chocolatey installation
-    $env:ChocolateyInstall = $InstallDir
-    
     if (-not $AdminMode -and $InstallDir) {
-        # Create install directory if it doesn't exist
-        New-Item -Path $InstallDir -ItemType Directory -Force | Out-Null
-        
         # Set environment variable for non-admin install
+        $env:ChocolateyInstall = $InstallDir
         [Environment]::SetEnvironmentVariable("ChocolateyInstall", $InstallDir, "User")
     }
     
