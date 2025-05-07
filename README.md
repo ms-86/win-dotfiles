@@ -45,25 +45,54 @@ Sets up the essential foundations:
 - Options for admin or non-admin installation
 
 ### Setup Script (setup.ps1)
-Installs and configures:
-- **VS Code**: Code editor
-- **Slack**: Team communication
+Installs tools defined in tools.json:
+- Automatically detects admin privileges
+- Uses portable versions when possible in non-admin mode
+- Reports installation success, skips, and failures
+
+### Configuration File (tools.json)
+Defines what tools to install:
+- Standard and portable package names
+- Admin requirement flags
+- Easy to customize without modifying scripts
 
 ## Customization
 
-### Adding More Tools
-To add more tools to the setup script, simply modify the setup.ps1 file:
+### Modifying Tools Configuration
+To add, remove, or modify tools, edit the `tools.json` file:
 
-```powershell
-# Uncomment and add more tools as needed
-# Install-Tool "microsoft-windows-terminal"
-# Install-Tool "nodejs-lts"
-# Install-Tool "docker-desktop"
+```json
+{
+  "tools": [
+    {
+      "name": "vscode",
+      "portableName": "vscode.portable",
+      "requiresAdmin": true
+    },
+    {
+      "name": "your-new-tool",
+      "portableName": "your-new-tool.portable",
+      "requiresAdmin": true
+    }
+  ]
+}
 ```
 
-### Custom Configurations
-<tbd>
-Create your own configuration scripts in the configs directory or modify the existing ones.
+### Using Custom Configuration Files
+You can use different configuration files for different setups:
+
+```powershell
+# Use a custom configuration file
+.\setup.ps1 -ConfigFile "path\to\custom-tools.json"
+
+# Or with the batch file
+run-setup.bat -ConfigFile "path\to\custom-tools.json"
+```
+
+### Configuration Fields
+- name: The Chocolatey package name
+- portableName: (Optional) The portable version package name
+- requiresAdmin: (Optional) Whether this package requires admin rights (defaults to true)
 
 ## Requirements
 - Windows 11
@@ -85,15 +114,19 @@ Run PowerShell as Administrator and execute:
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force
 ```
 
+Or use the included `run-setup.bat` which automatically bypasses the execution policy.
+
 ### Non-Admin Chocolatey Limitations
 When using the non-admin installation:
 - Some packages may fail to install or function properly
-- You might need to specify custom installation directories for some software
+- Portable versions will be used when available
+- Some tools may be skipped if they require admin and have no portable version
 
 ### Common Errors
 - Access Denied: Ensure you're running with appropriate permissions
 - Package Installation Failures: Try running with admin privileges or check internet connection
 - Script Execution Errors: Ensure PowerShell execution policy is properly set
+- Missing Configuration: Ensure `tools.json` exists in the script directory or specify with `-ConfigFile`
 
 ## Maintenance
 
