@@ -1,4 +1,4 @@
-# Windows 11 Initial Bootstrap (2025-05-07 19:38:35)
+# Windows 11 Initial Bootstrap (2025-05-07 22:20:23)
 # Author: ms-86
 # Repository: ms-86/win-dotfiles
 
@@ -60,6 +60,7 @@ function Install-Git {
     )
     
     Write-Host "Installing Git..." -ForegroundColor Cyan
+    Write-Host "Admin mode: $AdminMode" -ForegroundColor Magenta  # Debug output
     
     if ($AdminMode) {
         Write-Host "Installing standard Git package (requires admin rights)..." -ForegroundColor Cyan
@@ -99,6 +100,7 @@ if ($currentPolicy -ne 'RemoteSigned') {
 }
 
 $isAdmin = Test-Administrator
+Write-Host "Running as administrator: $isAdmin" -ForegroundColor Magenta  # Debug output
 
 if ($isAdmin) {
     Write-Host "Administrator privileges detected." -ForegroundColor Cyan
@@ -152,6 +154,7 @@ if ($isAdmin) {
 $confirmGit = Get-UserConfirmation "Do you want to install Git?"
 if ($confirmGit) {
     # Pass the admin status to the Install-Git function
+    Write-Host "Calling Install-Git with AdminMode=$isAdmin" -ForegroundColor Magenta  # Debug output
     Install-Git -AdminMode $isAdmin
 }
 
