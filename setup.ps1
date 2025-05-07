@@ -1,6 +1,11 @@
-# Windows 11 Developer Environment Setup (2025-05-07 21:58:23)
+# Windows 11 Developer Environment Setup (2025-05-07 22:02:30)
 # Author: ms-86
 # Repository: ms-86/win-dotfiles
+
+param (
+    [Parameter(Mandatory=$false)]
+    [string]$ConfigFile
+)
 
 # Exit immediately on any error (like set -e in bash)
 $ErrorActionPreference = 'Stop'
@@ -45,7 +50,7 @@ function Install-Tool {
 
 function Load-ToolsConfig {
     param (
-        [string]$ConfigPath = "tools.json"
+        [string]$ConfigPath
     )
     
     if (-not (Test-Path $ConfigPath)) {
@@ -74,14 +79,29 @@ if (-not $isAdmin) {
     Write-Host "Warning: Running without administrator privileges. Some installations will be skipped or use portable versions." -ForegroundColor Yellow
 }
 
-# Define configuration file path
-$configFile = Join-Path -Path $PSScriptRoot -ChildPath "tools.json"
-if (-not (Test-Path $configFile)) {
-    $configFile = "tools.json"  # Fallback to current directory
+# Determine configuration file path
+if (-not $ConfigFile) {
+    # Try to find config file in script directory
+    $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+    $defaultPath = Join-Path -Path $scriptDir -ChildPath "tools.json"
+    
+    if (Test-Path $defaultPath) {
+        $ConfigFile = $defaultPath
+    } else {
+        # Try current directory as fallback
+        $currentDirPath = Join-Path -Path (Get-Location) -ChildPath "tools.json"
+        if (Test-Path $currentDirPath) {
+            $ConfigFile = $currentDirPath
+        } else {
+            throw "No tools.json configuration file found. Please specify a path using -ConfigFile parameter."
+        }
+    }
 }
 
+Write-Host "Using configuration from: $ConfigFile" -ForegroundColor Cyan
+
 # Load tools configuration
-$toolsConfig = Load-ToolsConfig -ConfigPath $configFile
+$toolsConfig = Load-ToolsConfig -ConfigPath $ConfigFile
 
 $successful = 0
 $skipped = 0
