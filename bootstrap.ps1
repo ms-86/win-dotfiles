@@ -5,6 +5,11 @@
 # Exit immediately on any error (like set -e in bash)
 $ErrorActionPreference = 'Stop'
 
+# Parameter to detect if script was launched in elevated mode
+param(
+    [switch]$Elevated
+)
+
 function Test-Administrator {
     $currentUser = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
     return $currentUser.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -101,7 +106,7 @@ if ($isAdmin) {
     if ($confirmElevate) {
         # Self-elevate the script
         $scriptPath = $MyInvocation.MyCommand.Path
-        Start-Process PowerShell -Verb RunAs -ArgumentList "-ExecutionPolicy Bypass -File `"$scriptPath`""
+        Start-Process PowerShell -Verb RunAs -ArgumentList "-ExecutionPolicy Bypass -File `"$scriptPath`" -Elevated"
         exit
     } else {
         # User declined elevation, offer non-admin install
@@ -133,3 +138,9 @@ Write-Host "   git clone https://github.com/ms-86/win-dotfiles.git" -ForegroundC
 Write-Host "   cd win-dotfiles" -ForegroundColor Cyan
 Write-Host "2. Run the setup script:" -ForegroundColor Yellow
 Write-Host "   .\setup.ps1" -ForegroundColor Cyan
+
+# If this was run in elevated mode, wait for user input before closing
+if ($Elevated) {
+    Write-Host "`nPress any key to exit..." -ForegroundColor Yellow
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+}
