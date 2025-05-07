@@ -1,15 +1,17 @@
-# Windows 11 Initial Bootstrap (2025-05-07 12:58:54)
+# Windows 11 Initial Bootstrap (2025-05-07 19:38:35)
 # Author: ms-86
 # Repository: ms-86/win-dotfiles
 
 # Exit immediately on any error (like set -e in bash)
 $ErrorActionPreference = 'Stop'
 
+# Check if running as Administrator
 function Test-Administrator {
     $currentUser = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
     return $currentUser.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
+# Function to get user confirmation
 function Get-UserConfirmation {
     param(
         [string]$Message,
@@ -27,6 +29,7 @@ function Get-UserConfirmation {
     return $result -eq 0
 }
 
+# Function to install Chocolatey
 function Install-Chocolatey {
     param(
         [bool]$AdminMode,
@@ -79,55 +82,36 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned -Force
 
 # Detect if running as Administrator
 $isAdmin = Test-Administrator
+
+# Handle installation based on current privilege level
 if ($isAdmin) {
-    Write-Host "Currently running with administrator privileges." -ForegroundColor Cyan
-} else {
-    Write-Host "Currently running without administrator privileges." -ForegroundColor Yellow
-}
-
-Write-Host ""
-Write-Host "Chocolatey Installation Options:" -ForegroundColor Magenta
-Write-Host "1) Standard installation with administrator privileges (recommended for most users)" -ForegroundColor White
-Write-Host "   - Installs to C:\ProgramData\chocolatey" -ForegroundColor Gray
-Write-Host "   - Allows system-wide package management" -ForegroundColor Gray
-Write-Host ""
-Write-Host "2) User-specific installation without administrator privileges" -ForegroundColor White
-Write-Host "   - Installs to $HOME\chocolatey" -ForegroundColor Gray
-Write-Host "   - Limited to current user only" -ForegroundColor Gray
-Write-Host "   - Some packages may not work properly" -ForegroundColor Gray
-Write-Host ""
-
-$installChoice = Read-Host "Choose installation type (1 or 2)"
-
-# Process the choice
-switch ($installChoice) {
-    "1" {
-        # Admin installation selected
-        if (-not $isAdmin) {
-            $confirmElevate = Get-UserConfirmation "Administrator privileges are required for standard installation. Do you want to restart the script with elevated permissions?"
-            if ($confirmElevate) {
-                # Self-elevate the script
-                $scriptPath = $MyInvocation.MyCommand.Path
-                Start-Process PowerShell -Verb RunAs -ArgumentList "-ExecutionPolicy Bypass -File `"$scriptPath`""
-                exit
-            } else {
-                Write-Host "Cannot proceed with standard installation without administrator privileges." -ForegroundColor Red
-                exit 1
-            }
-        } else {
-            $confirmInstall = Get-UserConfirmation "Proceed with standard Chocolatey installation to C:\ProgramData\chocolatey?"
-            if (-not $confirmInstall) {
-                Write-Host "Installation cancelled by user." -ForegroundColor Yellow
-                exit
-            }
-            
-            # Install Chocolatey in admin mode (default location)
-            Install-Chocolatey -AdminMode $true
-        }
+    # Admin mode detected
+    Write-Host "Administrator privileges detected." -ForegroundColor Cyan
+    $confirmStandardInstall = Get-UserConfirmation "Would you like to proceed with standard installation of Chocolatey to C:\ProgramData\chocolatey?"
+    
+    if ($confirmStandardInstall) {
+        # Install Chocolatey in admin mode (default location)
+        Install-Chocolatey -AdminMode $true
+    } else {
+        Write-Host "Installation cancelled by user." -ForegroundColor Yellow
+        exit
     }
-    "2" {
-        # Non-admin installation selected
+} else {
+    # Non-admin mode detected
+    Write-Host "Running without administrator privileges." -ForegroundColor Yellow
+    $confirmElevate = Get-UserConfirmation "Standard installation requires administrator privileges. Would you like to restart the script with elevated permissions? (Recommended)"
+    
+    if ($confirmElevate) {
+        # Self-elevate the script
+        $scriptPath = $MyInvocation.MyCommand.Path
+        Start-Process PowerShell -Verb RunAs -ArgumentList "-ExecutionPolicy Bypass -File `"$scriptPath`""
+        exit
+    } else {
+        # User declined elevation, offer non-admin install
         $userInstallDir = "$HOME\chocolatey"
+        Write-Host "`nProceeding with user-specific installation..." -ForegroundColor Yellow
+        Write-Host "Default installation path: $userInstallDir" -ForegroundColor Cyan
+        
         $confirmDir = Get-UserConfirmation "Install Chocolatey to $userInstallDir?"
         if (-not $confirmDir) {
             $userInstallDir = Read-Host "Enter custom installation directory"
@@ -139,10 +123,6 @@ switch ($installChoice) {
         
         # Install Chocolatey in non-admin mode (custom location)
         Install-Chocolatey -AdminMode $false -InstallDir $userInstallDir
-    }
-    default {
-        Write-Host "Invalid choice. Exiting." -ForegroundColor Red
-        exit 1
     }
 }
 
