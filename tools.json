@@ -18,6 +18,10 @@
       "requiresAdmin": true
     },
     {
+      "name": "jabra-direct",
+      "requiresAdmin": true
+    },
+    {
       "name": "notepadplusplus",
       "portableName": "notepadplusplus.portable",
       "requiresAdmin": true
