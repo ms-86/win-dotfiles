@@ -1,0 +1,22 @@
+{
+  "tools": [
+    {
+      "name": "vscode",
+      "portableName": "vscode.portable",
+      "requiresAdmin": true
+    },
+    {
+      "name": "slack",
+      "requiresAdmin": true
+    },
+    {
+      "name": "dbeaver",
+      "requiresAdmin": true
+    },
+    {
+      "name": "notepadplusplus",
+      "portableName": "notepadplusplus.portable",
+      "requiresAdmin": true
+    }
+  ]
+}
