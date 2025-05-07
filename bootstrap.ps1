@@ -2,11 +2,6 @@
 # Author: ms-86
 # Repository: ms-86/win-dotfiles
 
-# Parameter to detect if script was launched in elevated mode
-param(
-    [switch]$Elevated
-)
-
 # Exit immediately on any error (like set -e in bash)
 $ErrorActionPreference = 'Stop'
 
@@ -78,6 +73,17 @@ function Install-Git {
     Write-Host "Git installed successfully!" -ForegroundColor Green
 }
 
+# Get script path to use for elevation if needed
+$scriptPath = $MyInvocation.MyCommand.Path
+
+# Check if the script was run with elevated flag
+$elevated = $false
+if ($args -contains "-Elevated") {
+    $elevated = $true
+    # Remove -Elevated from args if present to avoid issues with subsequent parsing
+    $args = $args | Where-Object { $_ -ne "-Elevated" }
+}
+
 # ===== Main Script =====
 
 Write-Host "Starting Windows initial bootstrap..." -ForegroundColor Green
@@ -106,8 +112,21 @@ if ($isAdmin) {
     
     if ($confirmElevate) {
         # Self-elevate the script
-        $scriptPath = $MyInvocation.MyCommand.Path
-        Start-Process PowerShell -Verb RunAs -ArgumentList "-ExecutionPolicy Bypass -File `"$scriptPath`" -Elevated"
+        if ($scriptPath) {
+            # If the script path is available
+            $command = "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`" -Elevated"
+            Start-Process PowerShell -Verb RunAs -ArgumentList $command
+        } else {
+            # Fallback for when the script is run directly from a web download
+            $tempScriptPath = "$env:TEMP\bootstrap.ps1"
+            if (Test-Path $tempScriptPath) {
+                $command = "-NoProfile -ExecutionPolicy Bypass -File `"$tempScriptPath`" -Elevated"
+                Start-Process PowerShell -Verb RunAs -ArgumentList $command
+            } else {
+                Write-Host "Unable to find script path for elevation." -ForegroundColor Red
+                exit 1
+            }
+        }
         exit
     } else {
         # User declined elevation, offer non-admin install
@@ -128,7 +147,8 @@ if ($isAdmin) {
 
 $confirmGit = Get-UserConfirmation "Do you want to install Git?"
 if ($confirmGit) {
-    Install-Git
+    # Pass the admin status to the Install-Git function
+    Install-Git -AdminMode $isAdmin
 }
 
 Write-Host "`nBootstrap complete!" -ForegroundColor Green
@@ -141,7 +161,7 @@ Write-Host "2. Run the setup script:" -ForegroundColor Yellow
 Write-Host "   .\setup.ps1" -ForegroundColor Cyan
 
 # If this was run in elevated mode, wait for user input before closing
-if ($Elevated) {
+if ($elevated) {
     Write-Host "`nPress any key to exit..." -ForegroundColor Yellow
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 }
