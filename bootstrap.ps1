@@ -2,13 +2,14 @@
 # Author: ms-86
 # Repository: ms-86/win-dotfiles
 
-# Exit immediately on any error (like set -e in bash)
-$ErrorActionPreference = 'Stop'
-
 # Parameter to detect if script was launched in elevated mode
 param(
     [switch]$Elevated
 )
+
+# Exit immediately on any error (like set -e in bash)
+$ErrorActionPreference = 'Stop'
+
 
 function Test-Administrator {
     $currentUser = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
