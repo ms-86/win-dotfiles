@@ -117,7 +117,7 @@ if ($isAdmin) {
             $userInstallDir = "$HOME\chocolatey"
         }
         
-        $confirmDir = Get-UserConfirmation "Install Chocolatey to $($userInstallDir?)"
+        $confirmDir = Get-UserConfirmation "Install Chocolatey to $($userInstallDir)?"
         if (-not $confirmDir) {
             exit 1
         }
