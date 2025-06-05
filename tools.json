@@ -38,6 +38,10 @@
     {
       "name": "chezmoi",
       "requiresAdmin": false
+    },
+    {
+      "name": "gnupg",
+      "requiresAdmin": true
     }
   ]
 }
