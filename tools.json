@@ -22,9 +22,22 @@
       "requiresAdmin": true
     },
     {
+      "name": "powerbi",
+      "requiresAdmin": true
+    },
+    {
+      "name": "tabular-editor",
+      "requiresAdmin": false,
+      "version": "2.25.0"
+    },
+    {
       "name": "notepadplusplus",
       "portableName": "notepadplusplus.portable",
       "requiresAdmin": true
+    },
+    {
+      "name": "chezmoi",
+      "requiresAdmin": false
     }
   ]
 }

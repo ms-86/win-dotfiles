@@ -19,14 +19,17 @@ function Install-Tool {
     param(
         [string]$Name,
         [string]$PortableName = "",
-        [bool]$RequiresAdmin = $true
+        [bool]$RequiresAdmin = $true,
+        [string]$Version = ""
     )
     
+    # If $Version is specified, add --version argument to choco install
+    $versionArg = if ($Version) { "--version $Version" } else { "" }
     $isAdmin = Test-Admin
     
     if (-not $isAdmin -and $PortableName) {
         Write-Host "Installing $PortableName (portable version)..." -ForegroundColor Cyan
-        & choco install $PortableName -y
+        & choco install $PortableName -y $versionArg
         if ($LASTEXITCODE -ne 0) { 
             Write-Host "$PortableName installation failed with exit code $LASTEXITCODE" -ForegroundColor Red
             return $false
@@ -39,7 +42,7 @@ function Install-Tool {
     }
     else {
         Write-Host "Installing $Name..." -ForegroundColor Cyan
-        & choco install $Name -y
+        & choco install $Name -y $versionArg
         if ($LASTEXITCODE -ne 0) { 
             Write-Host "$Name installation failed with exit code $LASTEXITCODE" -ForegroundColor Red
             return $false
@@ -111,8 +114,9 @@ $failed = 0
 foreach ($tool in $toolsConfig.tools) {
     $portableName = if ($tool.portableName) { $tool.portableName } else { "" }
     $requiresAdmin = if ($null -eq $tool.requiresAdmin) { $true } else { $tool.requiresAdmin }
+    $version = if ($tool.version) { $tool.version } else { "" }
     
-    $result = Install-Tool -Name $tool.name -PortableName $portableName -RequiresAdmin $requiresAdmin
+    $result = Install-Tool -Name $tool.name -PortableName $portableName -RequiresAdmin $requiresAdmin -Version $version
     
     if ($result) {
         $successful++
@@ -142,3 +146,28 @@ if (-not $isAdmin -and $skipped -gt 0) {
     Write-Host "`nRun this script as administrator to install all tools." -ForegroundColor Yellow
 }
 Write-Host "`nYou may need to restart your terminal for all changes to take effect." -ForegroundColor Yellow
+
+<#+
+.SYNOPSIS
+    Windows 11 Developer Environment Setup Script
+
+.DESCRIPTION
+    Installs developer tools using Chocolatey based on a configuration file (tools.json).
+    Each tool can optionally specify a version. If no version is specified, the latest version is installed.
+    
+    tools.json example:
+    {
+        "tools": [
+            { "name": "git" },
+            { "name": "nodejs", "version": "20.11.1" },
+            { "name": "python", "portableName": "python.portable", "requiresAdmin": false }
+        ]
+    }
+
+.PARAMETER ConfigFile
+    Path to the tools.json configuration file. If not specified, the script will look for tools.json in the script directory or current directory.
+
+.NOTES
+    - If a version is specified for a tool, that version will be installed using Chocolatey's --version argument.
+    - If no version is specified, the latest version will be installed.
+#>

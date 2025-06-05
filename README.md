@@ -54,7 +54,31 @@ Installs tools defined in tools.json:
 Defines what tools to install:
 - Standard and portable package names
 - Admin requirement flags
+- **Optional version property**: Specify a version to install, or omit for latest
 - Easy to customize without modifying scripts
+
+#### Example tools.json
+```json
+{
+  "tools": [
+    {
+      "name": "git"
+    },
+    {
+      "name": "nodejs",
+      "version": "20.11.1"
+    },
+    {
+      "name": "python",
+      "portableName": "python.portable",
+      "requiresAdmin": false
+    }
+  ]
+}
+```
+- `version` (optional): If specified, installs that version using Chocolatey. If omitted, installs the latest version.
+- `portableName` (optional): Name of the portable package to use if not running as admin.
+- `requiresAdmin` (optional): Set to `false` to allow install without admin rights.
 
 ## Customization
 
